@@ -1,8 +1,12 @@
 import { trackButtonClick } from '../firebase'
 
 const Header = () => {
-  const handleNavClick = (section: string) => {
-    trackButtonClick(`nav-${section}`, `導航到 ${section}`, undefined, 'header')
+  const scrollToSection = (sectionId: string, sectionName: string) => {
+    trackButtonClick(`nav-${sectionId}`, `導航到 ${sectionName}`, undefined, 'header')
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   return (
@@ -10,57 +14,50 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 py-3">
         <nav className="flex items-center justify-between">
           <div className="flex items-center space-x-8">
-            <a
-              href="#"
+            <button
               className="text-gray-700 hover:text-gray-900 text-sm font-medium"
-              onClick={() => handleNavClick('專案內容')}
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             >
               專案內容
-            </a>
-            <a
-              href="#faq"
+            </button>
+            <button
               className="text-gray-700 hover:text-gray-900 text-sm font-medium"
-              onClick={() => handleNavClick('常見問答')}
+              onClick={() => scrollToSection('faq', '常見問答')}
             >
               常見問答 9
-            </a>
-            <a
-              href="#comments"
+            </button>
+            <button
               className="text-gray-700 hover:text-gray-900 text-sm font-medium"
-              onClick={() => handleNavClick('留言')}
+              onClick={() => scrollToSection('comments', '留言')}
             >
               留言 1
-            </a>
+            </button>
           </div>
           <div className="flex items-center space-x-6 text-sm text-gray-600">
-            <a
-              href="#risk"
+            <button
               className="hover:text-gray-900"
-              onClick={() => handleNavClick('風險與挑戰')}
+              onClick={() => scrollToSection('risk', '風險與挑戰')}
             >
               風險與挑戰
-            </a>
-            <a
-              href="#refund"
+            </button>
+            <button
               className="hover:text-gray-900"
-              onClick={() => handleNavClick('退換貨規則')}
+              onClick={() => scrollToSection('refund', '退換貨規則')}
             >
               退換貨規則
-            </a>
-            <a
-              href="#contact"
+            </button>
+            <button
               className="hover:text-gray-900"
-              onClick={() => handleNavClick('客服聯絡方式')}
+              onClick={() => scrollToSection('contact', '客服聯絡方式')}
             >
               客服聯絡方式
-            </a>
-            <a
-              href="#info"
+            </button>
+            <button
               className="hover:text-gray-900"
-              onClick={() => handleNavClick('登記資料')}
+              onClick={() => scrollToSection('info', '登記資料')}
             >
               登記資料
-            </a>
+            </button>
           </div>
         </nav>
       </div>
