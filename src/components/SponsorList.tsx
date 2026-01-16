@@ -35,6 +35,8 @@ const formatTime = (timestamp: { seconds: number; nanoseconds: number } | null):
 const SponsorList = () => {
   const [sponsors, setSponsors] = useState<Sponsor[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false)
+  const INITIAL_DISPLAY_COUNT = 6 // 預設顯示數量
 
   /**
    * 訂閱贊助者列表更新
@@ -121,61 +123,68 @@ const SponsorList = () => {
               </div>
             </div>
 
-            {/* 贊助者列表 */}
-            <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-2xl p-6 border border-green-200">
-              <div className="space-y-4">
-                {sponsors.map((sponsor, index) => (
+            {/* 贊助者列表 - 緊湊網格版 */}
+            <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-2xl p-4 md:p-6 border border-green-200">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {(isExpanded ? sponsors : sponsors.slice(0, INITIAL_DISPLAY_COUNT)).map((sponsor, index) => (
                   <div
                     key={sponsor.id}
-                    className="bg-white rounded-xl p-4 shadow-sm border border-green-100 flex items-center gap-4 hover:shadow-md transition-shadow"
+                    className="bg-white rounded-lg p-3 shadow-sm border border-green-100 hover:shadow-md transition-shadow"
                   >
-                    {/* 排名徽章 */}
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      index === 0 ? 'bg-yellow-400 text-yellow-900' :
-                      index === 1 ? 'bg-gray-300 text-gray-700' :
-                      index === 2 ? 'bg-orange-400 text-orange-900' :
-                      'bg-green-100 text-green-700'
-                    }`}>
-                      {index < 3 ? (
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        <span className="text-sm font-bold">#{index + 1}</span>
-                      )}
-                    </div>
-
-                    {/* 贊助者資訊 */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-gray-900 truncate">{sponsor.name}</h3>
-                        {index === 0 && (
-                          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
-                            第一位
-                          </span>
+                    <div className="flex items-center gap-2 mb-1">
+                      {/* 排名徽章 */}
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+                        index === 0 ? 'bg-yellow-400 text-yellow-900' :
+                        index === 1 ? 'bg-gray-300 text-gray-700' :
+                        index === 2 ? 'bg-orange-400 text-orange-900' :
+                        'bg-green-100 text-green-700'
+                      }`}>
+                        {index < 3 ? (
+                          <span>{['🥇', '🥈', '🥉'][index]}</span>
+                        ) : (
+                          <span>{index + 1}</span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500 flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1">
-                          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          {sponsor.planName}
-                        </span>
-                        <span className="text-gray-300">|</span>
-                        <span className="text-green-600 font-medium">
-                          NT$ {sponsor.planPrice.toLocaleString()}
-                        </span>
-                      </p>
+                      {/* 名字 */}
+                      <h3 className="font-bold text-gray-900 truncate text-sm flex-1">{sponsor.name}</h3>
                     </div>
-
-                    {/* 時間 */}
-                    <div className="text-xs text-gray-400 flex-shrink-0">
-                      {formatTime(sponsor.createdAt as { seconds: number; nanoseconds: number } | null)}
+                    <div className="text-xs text-gray-500 flex items-center justify-between">
+                      <span className="text-green-600 font-medium">
+                        NT$ {sponsor.planPrice.toLocaleString()}
+                      </span>
+                      <span className="text-gray-400">
+                        {formatTime(sponsor.createdAt as { seconds: number; nanoseconds: number } | null)}
+                      </span>
                     </div>
                   </div>
                 ))}
               </div>
+
+              {/* 展開/收合按鈕 */}
+              {sponsors.length > INITIAL_DISPLAY_COUNT && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center gap-1 mx-auto transition-colors"
+                  >
+                    {isExpanded ? (
+                      <>
+                        <span>收起</span>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                      </>
+                    ) : (
+                      <>
+                        <span>展開全部 {sponsors.length} 位贊助者</span>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* 底部提示 */}

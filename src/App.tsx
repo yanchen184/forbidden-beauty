@@ -44,8 +44,8 @@ function HomePage() {
         <section id="sponsors">
           <SponsorList />
         </section>
-        <FAQSection />
         <CommentSection />
+        <FAQSection />
         <RiskSection />
         <RefundSection />
         <ContactSection />
