@@ -1,6 +1,16 @@
-import { trackButtonClick } from '../firebase'
+import { useEffect, useState } from 'react'
+import { trackButtonClick, subscribeToComments, Comment } from '../firebase'
 
 const Header = () => {
+  const [commentCount, setCommentCount] = useState(0)
+
+  useEffect(() => {
+    const unsubscribe = subscribeToComments((comments: Comment[]) => {
+      setCommentCount(comments.length)
+    })
+    return () => unsubscribe()
+  }, [])
+
   const scrollToSection = (sectionId: string, sectionName: string) => {
     trackButtonClick(`nav-${sectionId}`, `導航到 ${sectionName}`, undefined, 'header')
     const element = document.getElementById(sectionId)
@@ -30,7 +40,7 @@ const Header = () => {
               className="text-gray-700 hover:text-gray-900 text-sm font-medium"
               onClick={() => scrollToSection('comments', '留言')}
             >
-              留言 1
+              留言 {commentCount}
             </button>
           </div>
           <div className="flex items-center space-x-6 text-sm text-gray-600">
