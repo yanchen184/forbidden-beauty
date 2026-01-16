@@ -56,7 +56,7 @@ const FAQSection = () => {
     {
       id: 9,
       question: '留言功能是即時的嗎？',
-      answer: '是的，留言功能使用 Firebase 即時資料庫，你的留言會立即顯示在頁面上。'
+      answer: '是的，留言功能是即時的，你的留言會立即顯示在頁面上。'
     }
   ]
 

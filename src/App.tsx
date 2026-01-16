@@ -11,7 +11,6 @@ import CallToAction from './components/CallToAction'
 import BudgetChart from './components/BudgetChart'
 import FundingPlans from './components/FundingPlans'
 import SponsorList from './components/SponsorList'
-import UpdatesSection from './components/UpdatesSection'
 import FAQSection from './components/FAQSection'
 import CommentSection from './components/CommentSection'
 import RiskSection from './components/RiskSection'
@@ -35,7 +34,6 @@ function HomePage() {
         <BudgetChart />
         <FundingPlans />
         <SponsorList />
-        <UpdatesSection />
         <FAQSection />
         <CommentSection />
         <RiskSection />

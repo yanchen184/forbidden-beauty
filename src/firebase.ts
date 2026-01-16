@@ -97,17 +97,26 @@ export const trackVisitor = async () => {
     const referrer = document.referrer || ''
     const { isFromSearch, searchEngine } = detectSearchEngine(referrer)
 
-    const visitorData: VisitorData = {
+    // 建構 visitorData，排除 undefined 值（Firebase 不接受 undefined）
+    const visitorData: Record<string, unknown> = {
       timestamp: serverTimestamp(),
       userAgent: navigator.userAgent,
       referrer: referrer || 'direct',
       screenWidth: window.screen.width,
       screenHeight: window.screen.height,
       language: navigator.language,
-      path: window.location.pathname,
-      searchKeyword,
-      searchEngine,
-      isFromSearch
+      path: window.location.pathname
+    }
+
+    // 只有在有值時才加入這些欄位
+    if (searchKeyword) {
+      visitorData.searchKeyword = searchKeyword
+    }
+    if (searchEngine) {
+      visitorData.searchEngine = searchEngine
+    }
+    if (isFromSearch !== undefined) {
+      visitorData.isFromSearch = isFromSearch
     }
 
     await addDoc(collection(db, 'visitors'), visitorData)
@@ -189,12 +198,19 @@ export const trackVisitor = async () => {
 export const trackButtonClick = async (buttonId: string, buttonName: string, planPrice?: number, section?: string) => {
   
   try {
-    const clickData: ButtonClickData = {
+    // 建構 clickData，排除 undefined 值（Firebase 不接受 undefined）
+    const clickData: Record<string, unknown> = {
       timestamp: serverTimestamp(),
       buttonId,
-      buttonName,
-      planPrice,
-      section
+      buttonName
+    }
+
+    // 只有在有值時才加入這些欄位
+    if (planPrice !== undefined) {
+      clickData.planPrice = planPrice
+    }
+    if (section) {
+      clickData.section = section
     }
 
     await addDoc(collection(db, 'buttonClicks'), clickData)

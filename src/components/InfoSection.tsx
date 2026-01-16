@@ -47,16 +47,6 @@ const InfoSection = () => {
             </p>
           </div>
 
-          <div className="border-t border-gray-200 mt-6 pt-6">
-            <h3 className="text-sm text-gray-500 mb-2">技術實現</h3>
-            <div className="flex flex-wrap gap-2">
-              <span className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">React</span>
-              <span className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">TypeScript</span>
-              <span className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">Tailwind CSS</span>
-              <span className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">Firebase</span>
-              <span className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">GitHub Pages</span>
-            </div>
-          </div>
         </div>
       </div>
     </section>
