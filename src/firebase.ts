@@ -479,4 +479,98 @@ export const subscribeToSearchStats = (
   return unsubscribe
 }
 
+// ============ 贊助者功能 ============
+
+/**
+ * 贊助者資料結構
+ */
+export interface Sponsor {
+  id: string
+  name: string
+  planName: string
+  planPrice: number
+  createdAt: Timestamp | null
+}
+
+/**
+ * 新增贊助者到 Firestore
+ * 記錄贊助者的名字、方案名稱、方案價格和時間
+ * @param name - 贊助者名字
+ * @param planName - 方案名稱
+ * @param planPrice - 方案價格
+ */
+export const addSponsor = async (
+  name: string,
+  planName: string,
+  planPrice: number
+): Promise<void> => {
+  try {
+    await addDoc(collection(db, 'sponsors'), {
+      name: name.trim(),
+      planName,
+      planPrice,
+      createdAt: serverTimestamp()
+    })
+    console.log('贊助者已新增:', name)
+
+    // 更新贊助統計
+    const sponsorStatsRef = doc(db, 'stats', 'sponsors')
+    const sponsorStatsDoc = await getDoc(sponsorStatsRef)
+
+    if (sponsorStatsDoc.exists()) {
+      await updateDoc(sponsorStatsRef, {
+        totalSponsors: increment(1),
+        totalAmount: increment(planPrice),
+        lastSponsor: serverTimestamp()
+      })
+    } else {
+      await setDoc(sponsorStatsRef, {
+        totalSponsors: 1,
+        totalAmount: planPrice,
+        lastSponsor: serverTimestamp()
+      })
+    }
+
+    if (analytics) {
+      logEvent(analytics, 'sponsor_added', {
+        sponsor_name: name,
+        plan_name: planName,
+        plan_price: planPrice
+      })
+    }
+  } catch (error) {
+    console.error('新增贊助者失敗:', error)
+    throw error
+  }
+}
+
+/**
+ * 訂閱贊助者列表更新（即時監聽）
+ * 使用 onSnapshot 實現即時更新，當有新贊助者時自動觸發 callback
+ * 按時間倒序排列
+ * @param callback - 當贊助者列表更新時的回調函數
+ * @returns 取消訂閱的函數（用於 cleanup）
+ */
+export const subscribeToSponsors = (
+  callback: (sponsors: Sponsor[]) => void
+): (() => void) => {
+  const sponsorsRef = collection(db, 'sponsors')
+  const q = query(sponsorsRef, orderBy('createdAt', 'desc'))
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const sponsors: Sponsor[] = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      name: doc.data().name || '匿名贊助者',
+      planName: doc.data().planName || '',
+      planPrice: doc.data().planPrice || 0,
+      createdAt: doc.data().createdAt as Timestamp | null
+    }))
+    callback(sponsors)
+  }, (error) => {
+    console.error('監聽贊助者列表失敗:', error)
+  })
+
+  return unsubscribe
+}
+
 export { db, analytics }

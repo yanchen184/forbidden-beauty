@@ -1,4 +1,12 @@
+import { useCallback } from 'react'
 import { trackButtonClick, trackShareClick } from '../firebase'
+
+/**
+ * 分享網址
+ */
+const SHARE_URL = 'https://yanchen184.github.io/forbidden-beauty/'
+const SHARE_TITLE = '禁忌之美：華麗成人藝術電影 - 募資專案'
+const SHARE_TEXT = '一場挑戰美感與慾望界線的史詩級實驗影像，支持這場藝術革命！'
 
 const Hero = () => {
   const currentAmount = 151500
@@ -7,10 +15,39 @@ const Hero = () => {
   const supporters = 303
   const daysLeft = 96
 
-  const handleShare = (platform: string) => {
+  /**
+   * 處理社群分享
+   * 根據不同平台開啟對應的分享連結
+   */
+  const handleShare = useCallback((platform: string) => {
     trackShareClick(platform)
-    // 實際分享邏輯可以在這裡實現
-  }
+
+    const encodedUrl = encodeURIComponent(SHARE_URL)
+    const encodedTitle = encodeURIComponent(SHARE_TITLE)
+    const encodedText = encodeURIComponent(SHARE_TEXT)
+
+    let shareUrl = ''
+
+    switch (platform) {
+      case 'Facebook':
+        // Facebook sharer URL
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`
+        break
+      case 'Twitter':
+        // Twitter/X intent URL
+        shareUrl = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`
+        break
+      case 'Line':
+        // Line share URL
+        shareUrl = `https://social-plugins.line.me/lineit/share?url=${encodedUrl}&text=${encodedTitle}`
+        break
+      default:
+        return
+    }
+
+    // 開啟新視窗進行分享
+    window.open(shareUrl, '_blank', 'width=600,height=400,scrollbars=yes')
+  }, [])
 
   const handleSupport = () => {
     trackButtonClick('hero-support', '支持專案', undefined, 'hero')

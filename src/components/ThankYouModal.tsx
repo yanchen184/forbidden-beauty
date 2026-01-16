@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { subscribeToButtonStats, subscribeToVisitorStats, subscribeToSearchStats, ButtonStats, VisitorStats, SearchVisitorStats } from '../firebase'
+import { subscribeToButtonStats, subscribeToVisitorStats, subscribeToSearchStats, addSponsor, ButtonStats, VisitorStats, SearchVisitorStats } from '../firebase'
 
 /**
  * 方案資料介面
@@ -21,6 +21,7 @@ interface ThankYouModalProps {
 /**
  * 感謝 Modal 組件
  * 當用戶點擊「選擇此方案」時顯示
+ * 提供留名功能讓用戶可以記錄贊助
  * 即時顯示該方案的點擊次數和總訪客數
  */
 const ThankYouModal = ({ isOpen, onClose, plan }: ThankYouModalProps) => {
@@ -29,6 +30,12 @@ const ThankYouModal = ({ isOpen, onClose, plan }: ThankYouModalProps) => {
   const [visitorStats, setVisitorStats] = useState<VisitorStats>({ totalVisits: 0, lastVisit: null })
   const [searchStats, setSearchStats] = useState<SearchVisitorStats>({ total: 0, lastVisit: null })
   const [isLoading, setIsLoading] = useState(true)
+
+  // 贊助者留名狀態
+  const [sponsorName, setSponsorName] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   /**
    * 訂閱統計數據更新
@@ -64,6 +71,17 @@ const ThankYouModal = ({ isOpen, onClose, plan }: ThankYouModalProps) => {
       unsubscribeSearch()
     }
   }, [isOpen, plan.price])
+
+  /**
+   * 重置表單狀態（當 Modal 開啟時）
+   */
+  useEffect(() => {
+    if (isOpen) {
+      setSponsorName('')
+      setSubmitSuccess(false)
+      setSubmitError(null)
+    }
+  }, [isOpen])
 
   /**
    * 處理 ESC 鍵關閉 Modal
@@ -105,6 +123,40 @@ const ThankYouModal = ({ isOpen, onClose, plan }: ThankYouModalProps) => {
     }
   }, [isOpen])
 
+  /**
+   * 處理贊助者提交
+   * 將名字和方案資訊記錄到 Firebase
+   */
+  const handleSponsorSubmit = useCallback(async () => {
+    if (!sponsorName.trim()) {
+      setSubmitError('請輸入你的名字')
+      return
+    }
+
+    setIsSubmitting(true)
+    setSubmitError(null)
+
+    try {
+      await addSponsor(sponsorName, plan.name, plan.price)
+      setSubmitSuccess(true)
+      setSponsorName('')
+    } catch (error) {
+      console.error('提交贊助失敗:', error)
+      setSubmitError('提交失敗，請稍後再試')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [sponsorName, plan.name, plan.price])
+
+  /**
+   * 處理輸入框 Enter 鍵提交
+   */
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !isSubmitting && !submitSuccess) {
+      handleSponsorSubmit()
+    }
+  }, [handleSponsorSubmit, isSubmitting, submitSuccess])
+
   // 如果 Modal 未開啟，不渲染任何內容
   if (!isOpen) return null
 
@@ -116,7 +168,7 @@ const ThankYouModal = ({ isOpen, onClose, plan }: ThankYouModalProps) => {
       aria-modal="true"
       aria-labelledby="thank-you-title"
     >
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full transform animate-slideUp overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full transform animate-slideUp overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-gradient-to-r from-green-500 to-teal-500 p-6 text-white">
           <div className="flex items-center justify-between">
@@ -152,6 +204,67 @@ const ThankYouModal = ({ isOpen, onClose, plan }: ThankYouModalProps) => {
             <p className="text-gray-500 text-sm">
               這個頁面是用來追蹤有多少人對這個專案感興趣的實驗。
             </p>
+          </div>
+
+          {/* 留名區塊 */}
+          <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-xl p-5 mb-6 border border-green-200">
+            <h3 className="font-bold text-green-800 mb-3 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              我要留名
+            </h3>
+
+            {submitSuccess ? (
+              <div className="bg-white rounded-lg p-4 border border-green-300">
+                <div className="flex items-center gap-3 text-green-700">
+                  <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium">感謝你的支持！</p>
+                    <p className="text-sm text-green-600">你的名字已經記錄在感謝名單中</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-gray-600 mb-3">
+                  留下你的名字，讓我們記住每一位支持者
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={sponsorName}
+                    onChange={(e) => setSponsorName(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="輸入你的名字或暱稱"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                    disabled={isSubmitting}
+                    maxLength={50}
+                  />
+                  <button
+                    onClick={handleSponsorSubmit}
+                    disabled={isSubmitting || !sponsorName.trim()}
+                    className="bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold px-5 py-3 rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        <span>送出中</span>
+                      </div>
+                    ) : (
+                      '確認贊助'
+                    )}
+                  </button>
+                </div>
+                {submitError && (
+                  <p className="text-red-500 text-sm mt-2">{submitError}</p>
+                )}
+              </>
+            )}
           </div>
 
           {/* 統計數據 */}

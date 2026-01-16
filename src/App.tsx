@@ -9,6 +9,7 @@ import PhilosophySection from './components/PhilosophySection'
 import CallToAction from './components/CallToAction'
 import BudgetChart from './components/BudgetChart'
 import FundingPlans from './components/FundingPlans'
+import SponsorList from './components/SponsorList'
 import CommentSection from './components/CommentSection'
 import Footer from './components/Footer'
 
@@ -30,6 +31,7 @@ function App() {
         <CallToAction />
         <BudgetChart />
         <FundingPlans />
+        <SponsorList />
         <CommentSection />
       </main>
       <Footer />
