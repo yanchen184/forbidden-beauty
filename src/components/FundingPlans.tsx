@@ -1,12 +1,11 @@
-import { useState, useCallback } from 'react'
-import { trackPlanClick } from '../firebase'
+import { useState, useCallback, useEffect } from 'react'
+import { trackPlanClick, trackFunnelStep, subscribeToSponsors, Sponsor } from '../firebase'
 import ThankYouModal from './ThankYouModal'
 
 interface FundingPlan {
   id: string
   price: number
   name: string
-  backers: number
   description: string
   items: string[]
   shipping: string[]
@@ -17,12 +16,27 @@ const FundingPlans = () => {
   // Modal 狀態
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<FundingPlan | null>(null)
+  // 各方案的贊助次數（從 Firebase 即時獲取）
+  const [planBackers, setPlanBackers] = useState<Record<number, number>>({})
+
+  // 訂閱贊助者資料，計算各方案的贊助次數
+  useEffect(() => {
+    const unsubscribe = subscribeToSponsors((sponsors: Sponsor[]) => {
+      const counts: Record<number, number> = {}
+      sponsors.forEach((sponsor) => {
+        const price = sponsor.planPrice
+        counts[price] = (counts[price] || 0) + 1
+      })
+      setPlanBackers(counts)
+    })
+    return () => unsubscribe()
+  }, [])
+
   const plans: FundingPlan[] = [
     {
       id: 'plan-500',
       price: 500,
       name: '微光信札',
-      backers: 303,
       description: '專屬導演簽名明信片',
       items: [
         '專屬導演簽名明信片一張，每張都承載著我們對藝術的執念'
@@ -34,7 +48,6 @@ const FundingPlans = () => {
       id: 'plan-1500',
       price: 1500,
       name: '創作之鑰',
-      backers: 0,
       description: '幕後製作筆記電子檔（含設計發想、初稿等）',
       items: [
         '幕後製作筆記電子檔（含設計發想、初稿等）',
@@ -47,7 +60,6 @@ const FundingPlans = () => {
       id: 'plan-3000',
       price: 3000,
       name: '劇場導覽體驗',
-      backers: 0,
       description: '線上藝術發表會入場（由導演領頭導覽導遊）',
       items: [
         '線上藝術發表會入場（由導演領頭導覽導遊）',
@@ -60,7 +72,6 @@ const FundingPlans = () => {
       id: 'plan-10000',
       price: 10000,
       name: '永恆守護者',
-      backers: 0,
       description: '片尾「藝術守護者」名單致謝',
       items: [
         '片尾「藝術守護者」名單致謝',
@@ -73,7 +84,6 @@ const FundingPlans = () => {
       id: 'plan-50000',
       price: 50000,
       name: '至尊珍藏禮',
-      backers: 0,
       description: '限量簽名劇照 + 專屬感謝影片',
       items: [
         '限量簽名劇照 + 專屬感謝影片',
@@ -91,9 +101,13 @@ const FundingPlans = () => {
   const handlePlanClick = useCallback((plan: FundingPlan) => {
     // 追蹤按鈕點擊
     trackPlanClick(plan.name, plan.price)
+    // 追蹤漏斗步驟
+    trackFunnelStep('click_plan', { planName: plan.name, planPrice: plan.price })
     // 設定選中的方案並開啟 Modal
     setSelectedPlan(plan)
     setIsModalOpen(true)
+    // 追蹤打開 Modal
+    trackFunnelStep('open_modal', { planName: plan.name, planPrice: plan.price })
   }, [])
 
   /**
@@ -127,7 +141,7 @@ const FundingPlans = () => {
                   <span className="text-3xl font-bold text-gray-900">NT$ {plan.price.toLocaleString()}</span>
                 </div>
                 <p className="text-sm text-gray-500">
-                  已被贊助 {plan.backers} 次
+                  已被贊助 {planBackers[plan.price] || 0} 次
                 </p>
               </div>
 
@@ -162,7 +176,10 @@ const FundingPlans = () => {
                 {/* 選擇按鈕 */}
                 <button
                   onClick={() => handlePlanClick(plan)}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+                  className="w-full bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold
+                             py-3 px-4 rounded-lg transition-all
+                             focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+                             active:scale-[0.98]"
                 >
                   選擇此方案
                 </button>
