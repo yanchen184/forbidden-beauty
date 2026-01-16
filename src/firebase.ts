@@ -555,7 +555,7 @@ export const subscribeToSponsors = (
   callback: (sponsors: Sponsor[]) => void
 ): (() => void) => {
   const sponsorsRef = collection(db, 'sponsors')
-  const q = query(sponsorsRef, orderBy('createdAt', 'desc'))
+  const q = query(sponsorsRef, orderBy('createdAt', 'asc'))
 
   const unsubscribe = onSnapshot(q, (snapshot) => {
     const sponsors: Sponsor[] = snapshot.docs.map((doc) => ({
