@@ -18,13 +18,6 @@ const Header = () => {
               專案內容
             </a>
             <a
-              href="#updates"
-              className="text-gray-700 hover:text-gray-900 text-sm font-medium"
-              onClick={() => handleNavClick('專案更新')}
-            >
-              專案更新 1
-            </a>
-            <a
               href="#faq"
               className="text-gray-700 hover:text-gray-900 text-sm font-medium"
               onClick={() => handleNavClick('常見問答')}
