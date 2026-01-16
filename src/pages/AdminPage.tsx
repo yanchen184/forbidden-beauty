@@ -60,6 +60,7 @@ const AdminPage = () => {
   const [comments, setComments] = useState<Comment[]>([])
   const [searchVisitors, setSearchVisitors] = useState<SearchVisitor[]>([])
   const [recentVisitors, setRecentVisitors] = useState<Visitor[]>([])
+  const [allVisitors, setAllVisitors] = useState<Visitor[]>([])
   const [buttonClicks, setButtonClicks] = useState<ButtonClick[]>([])
   const [buttonStats, setButtonStats] = useState<ButtonStat[]>([])
   const [funnelStats, setFunnelStats] = useState<Record<string, number>>({
@@ -108,7 +109,7 @@ const AdminPage = () => {
       setSearchVisitors(visitors)
     })
 
-    // 訂閱最近訪客
+    // 訂閱最近訪客（100筆，用於訪客列表）
     const visitorsRef = collection(db, 'visitors')
     const visitorsQ = query(visitorsRef, orderBy('timestamp', 'desc'), limit(100))
     const unsubscribeRecentVisitors = onSnapshot(visitorsQ, (snapshot) => {
@@ -125,6 +126,24 @@ const AdminPage = () => {
         searchEngine: doc.data().searchEngine
       }))
       setRecentVisitors(visitors)
+    })
+
+    // 訂閱全部訪客（用於裝置分布統計）
+    const allVisitorsQ = query(visitorsRef, orderBy('timestamp', 'desc'))
+    const unsubscribeAllVisitors = onSnapshot(allVisitorsQ, (snapshot) => {
+      const visitors: Visitor[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        timestamp: doc.data().timestamp as Timestamp | null,
+        userAgent: doc.data().userAgent || '',
+        referrer: doc.data().referrer || 'direct',
+        screenWidth: doc.data().screenWidth || 0,
+        screenHeight: doc.data().screenHeight || 0,
+        language: doc.data().language || '',
+        path: doc.data().path || '/',
+        isFromSearch: doc.data().isFromSearch || false,
+        searchEngine: doc.data().searchEngine
+      }))
+      setAllVisitors(visitors)
     })
 
     // 訂閱按鈕點擊記錄
@@ -167,6 +186,7 @@ const AdminPage = () => {
       unsubscribeComments()
       unsubscribeSearchVisitors()
       unsubscribeRecentVisitors()
+      unsubscribeAllVisitors()
       unsubscribeClicks()
       unsubscribeFunnel()
     }
@@ -224,8 +244,8 @@ const AdminPage = () => {
 
   // 統計數據
   const totalAmount = sponsors.reduce((sum, s) => sum + s.planPrice, 0)
-  const mobileVisitors = recentVisitors.filter(v => parseUserAgent(v.userAgent).device === 'Mobile').length
-  const desktopVisitors = recentVisitors.filter(v => parseUserAgent(v.userAgent).device === 'Desktop').length
+  const mobileVisitors = allVisitors.filter(v => parseUserAgent(v.userAgent).device === 'Mobile').length
+  const desktopVisitors = allVisitors.filter(v => parseUserAgent(v.userAgent).device === 'Desktop').length
 
   // 方案統計
   const planStats = sponsors.reduce((acc, s) => {
@@ -236,8 +256,8 @@ const AdminPage = () => {
     return acc
   }, {} as Record<string, { count: number; amount: number }>)
 
-  // 瀏覽器統計
-  const browserStats = recentVisitors.reduce((acc, v) => {
+  // 瀏覽器統計（全部訪客）
+  const browserStats = allVisitors.reduce((acc, v) => {
     const { browser } = parseUserAgent(v.userAgent)
     acc[browser] = (acc[browser] || 0) + 1
     return acc
@@ -318,7 +338,9 @@ const AdminPage = () => {
                   </div>
                   <div className="bg-white rounded-lg p-4 shadow">
                     <p className="text-xs text-gray-500 mb-1">按鈕點擊</p>
-                    <p className="text-2xl font-bold text-orange-600">{buttonClicks.length}</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {buttonStats.reduce((sum, s) => sum + s.clicks, 0)}
+                    </p>
                   </div>
                 </div>
 
@@ -357,7 +379,7 @@ const AdminPage = () => {
 
                   {/* 裝置分布 */}
                   <div className="bg-white rounded-lg p-6 shadow">
-                    <h2 className="text-lg font-bold text-gray-800 mb-4">📱 裝置分布（最近100筆）</h2>
+                    <h2 className="text-lg font-bold text-gray-800 mb-4">📱 裝置分布（全部訪客）</h2>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-blue-50 rounded-lg p-4 text-center">
                         <div className="text-3xl mb-2">🖥️</div>
@@ -396,7 +418,7 @@ const AdminPage = () => {
 
                   {/* 瀏覽器統計 */}
                   <div className="bg-white rounded-lg p-6 shadow">
-                    <h2 className="text-lg font-bold text-gray-800 mb-4">🌐 瀏覽器統計（最近100筆）</h2>
+                    <h2 className="text-lg font-bold text-gray-800 mb-4">🌐 瀏覽器統計（全部訪客）</h2>
                     <div className="space-y-2">
                       {Object.entries(browserStats).sort((a, b) => b[1] - a[1]).map(([browser, count]) => (
                         <div key={browser} className="flex items-center gap-3">
@@ -404,7 +426,7 @@ const AdminPage = () => {
                           <div className="flex-1 bg-gray-200 rounded-full h-3">
                             <div
                               className="bg-indigo-500 h-3 rounded-full"
-                              style={{ width: `${(count / recentVisitors.length) * 100}%` }}
+                              style={{ width: `${(count / allVisitors.length) * 100}%` }}
                             />
                           </div>
                           <span className="w-8 text-sm text-gray-700">{count}</span>

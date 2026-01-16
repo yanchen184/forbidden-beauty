@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { subscribeToButtonStats, subscribeToVisitorStats, subscribeToSearchStats, addSponsor, ButtonStats, VisitorStats, SearchVisitorStats } from '../firebase'
+import { subscribeToButtonStats, subscribeToVisitorStats, addSponsor, trackFunnelStep, ButtonStats, VisitorStats } from '../firebase'
 
 /**
  * 方案資料介面
@@ -28,7 +28,6 @@ const ThankYouModal = ({ isOpen, onClose, plan }: ThankYouModalProps) => {
   // 統計數據狀態
   const [buttonStats, setButtonStats] = useState<ButtonStats | null>(null)
   const [visitorStats, setVisitorStats] = useState<VisitorStats>({ totalVisits: 0, lastVisit: null })
-  const [searchStats, setSearchStats] = useState<SearchVisitorStats>({ total: 0, lastVisit: null })
   const [isLoading, setIsLoading] = useState(true)
 
   // 贊助者留名狀態
@@ -59,16 +58,10 @@ const ThankYouModal = ({ isOpen, onClose, plan }: ThankYouModalProps) => {
       setVisitorStats(stats)
     })
 
-    // 訂閱搜尋來源統計
-    const unsubscribeSearch = subscribeToSearchStats((stats) => {
-      setSearchStats(stats)
-    })
-
     // Cleanup: 取消訂閱以防止記憶體洩漏
     return () => {
       unsubscribeButton()
       unsubscribeVisitor()
-      unsubscribeSearch()
     }
   }, [isOpen, plan.price])
 
@@ -268,7 +261,7 @@ const ThankYouModal = ({ isOpen, onClose, plan }: ThankYouModalProps) => {
           </div>
 
           {/* 統計數據 */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-2 gap-3 mb-6">
             {/* 方案點擊次數 */}
             <div className="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
               <div className="text-xs text-gray-500 mb-1">此方案被選擇</div>
@@ -298,68 +291,7 @@ const ThankYouModal = ({ isOpen, onClose, plan }: ThankYouModalProps) => {
               )}
               <div className="text-xs text-gray-400">人</div>
             </div>
-
-            {/* 從搜尋引擎來的訪客 */}
-            <div className="bg-purple-50 rounded-xl p-3 text-center border border-purple-100">
-              <div className="text-xs text-purple-600 mb-1">搜尋引擎來的</div>
-              {isLoading ? (
-                <div className="h-8 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-500 border-t-transparent"></div>
-                </div>
-              ) : (
-                <div className="text-2xl font-bold text-purple-600">
-                  {searchStats.total}
-                </div>
-              )}
-              <div className="text-xs text-purple-400">人</div>
-            </div>
           </div>
-
-          {/* 搜尋來源細節 */}
-          {searchStats.total > 0 ? (
-            <div className="bg-purple-50/50 rounded-lg p-3 mb-4 border border-purple-100">
-              <p className="text-xs text-purple-700 font-medium mb-2">搜尋來源分布：</p>
-              <div className="flex flex-wrap gap-2 text-xs">
-                {searchStats.fromGoogle && searchStats.fromGoogle > 0 && (
-                  <span className="bg-white px-2 py-1 rounded text-purple-600 border border-purple-200">
-                    Google: {searchStats.fromGoogle}
-                  </span>
-                )}
-                {searchStats.fromBing && searchStats.fromBing > 0 && (
-                  <span className="bg-white px-2 py-1 rounded text-purple-600 border border-purple-200">
-                    Bing: {searchStats.fromBing}
-                  </span>
-                )}
-                {searchStats.fromYahoo && searchStats.fromYahoo > 0 && (
-                  <span className="bg-white px-2 py-1 rounded text-purple-600 border border-purple-200">
-                    Yahoo: {searchStats.fromYahoo}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-purple-500 mt-2">
-                可能搜尋：禁忌之美、禁忌之美鍾佳播、禁忌之美募資...
-              </p>
-            </div>
-          ) : (
-            <div className="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-700 text-sm">尚無搜尋關鍵字記錄</p>
-                  <p className="text-gray-500 text-xs mt-1 leading-relaxed">
-                    當有人從 Google 搜尋「禁忌之美」進入網站時，關鍵字會被記錄在這裡。
-                  </p>
-                  <p className="text-gray-400 text-xs mt-2 italic">
-                    我猜別人會搜尋：禁忌之美鍾佳播、禁忌之美募資
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* 方案資訊提示 */}
           <div className="bg-green-50 rounded-lg p-4 border border-green-100 mb-6">
