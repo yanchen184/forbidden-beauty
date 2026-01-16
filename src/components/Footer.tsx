@@ -78,8 +78,8 @@ const Footer = () => {
             <div className="mt-6">
               <p className="text-sm text-gray-400">
                 有任何問題請聯繫：<br />
-                <a href="mailto:contact@forbidden-beauty.com" className="text-blue-400 hover:text-blue-300">
-                  contact@forbidden-beauty.com
+                <a href="mailto:bobchen184@gmail.com" className="text-blue-400 hover:text-blue-300">
+                  bobchen184@gmail.com
                 </a>
               </p>
             </div>
