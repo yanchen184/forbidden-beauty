@@ -1,5 +1,5 @@
-import { useCallback } from 'react'
-import { trackButtonClick, trackShareClick } from '../firebase'
+import { useCallback, useEffect, useState } from 'react'
+import { trackButtonClick, trackShareClick, subscribeToSponsors, Sponsor } from '../firebase'
 
 /**
  * 分享網址
@@ -9,10 +9,25 @@ const SHARE_TITLE = '禁忌之美：華麗成人藝術電影 - 募資專案'
 const SHARE_TEXT = '一場挑戰美感與慾望界線的史詩級實驗影像，支持這場藝術革命！'
 
 const Hero = () => {
-  const currentAmount = 151500
+  const [sponsorCount, setSponsorCount] = useState(0)
+  const [totalAmount, setTotalAmount] = useState(0)
+
+  useEffect(() => {
+    const unsubscribe = subscribeToSponsors((sponsors: Sponsor[]) => {
+      setSponsorCount(sponsors.length)
+      const total = sponsors.reduce((sum, s) => sum + (s.planPrice || 0), 0)
+      setTotalAmount(total)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  // 基礎數據 + 即時贊助數據
+  const baseAmount = 151500
+  const baseSupport = 303
+  const currentAmount = baseAmount + totalAmount
   const goalAmount = 3000000
   const progress = (currentAmount / goalAmount) * 100
-  const supporters = 303
+  const supporters = baseSupport + sponsorCount
   const daysLeft = 96
 
   /**
@@ -70,7 +85,7 @@ const Hero = () => {
                   <p className="text-xl md:text-2xl text-gray-300 mb-6">
                     華麗成人藝術電影
                   </p>
-                  <p className="text-gray-400 max-w-md mx-auto">
+                  <p className="text-gray-300 max-w-md mx-auto">
                     一場挑戰美感與慾望界線的<br />
                     史詩級實驗影像
                   </p>
@@ -160,35 +175,50 @@ const Hero = () => {
                 <span className="ml-2">2025/09/16 00:00 - 2025/12/32 23:61</span>
               </div>
 
-              {/* 分享按鈕 */}
+              {/* 分享按鈕 - 44px 觸控目標符合 iOS 標準 */}
               <div className="flex items-center gap-3 mb-6">
                 <span className="text-sm text-gray-500">分享這則訊息</span>
                 <button
                   onClick={() => handleShare('Facebook')}
-                  className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700 transition-colors"
+                  className="w-11 h-11 bg-blue-600 rounded-full flex items-center justify-center text-white
+                             hover:bg-blue-700 active:scale-95 transition-all
+                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  aria-label="分享到 Facebook"
                 >
-                  <span className="text-xs font-bold">f</span>
+                  <span className="text-sm font-bold">f</span>
                 </button>
                 <button
                   onClick={() => handleShare('Twitter')}
-                  className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white hover:bg-gray-800 transition-colors"
+                  className="w-11 h-11 bg-black rounded-full flex items-center justify-center text-white
+                             hover:bg-gray-800 active:scale-95 transition-all
+                             focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                  aria-label="分享到 X (Twitter)"
                 >
-                  <span className="text-xs font-bold">𝕏</span>
+                  <span className="text-sm font-bold">𝕏</span>
                 </button>
                 <button
                   onClick={() => handleShare('Line')}
-                  className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white hover:bg-green-600 transition-colors"
+                  className="w-11 h-11 bg-green-500 rounded-full flex items-center justify-center text-white
+                             hover:bg-green-600 active:scale-95 transition-all
+                             focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  aria-label="分享到 Line"
                 >
-                  <span className="text-xs font-bold">L</span>
+                  <span className="text-sm font-bold">L</span>
                 </button>
               </div>
 
-              {/* 支持專案按鈕 */}
+              {/* 支持專案按鈕 - 含社交證明 */}
               <button
                 onClick={handleSupport}
-                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg transition-colors text-lg"
+                className="w-full bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold
+                           py-4 px-6 rounded-lg transition-all text-lg
+                           focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+                           active:scale-[0.98]"
               >
-                支持專案
+                <span className="block">立即支持</span>
+                <span className="block text-sm font-normal opacity-90">
+                  已有 {supporters.toLocaleString()} 人加入支持
+                </span>
               </button>
             </div>
           </div>

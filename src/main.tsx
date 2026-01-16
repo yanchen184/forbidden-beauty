@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
-console.log('禁忌之美募資網站 v1.3.1')
+console.log('禁忌之美募資網站 v1.4.0')
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

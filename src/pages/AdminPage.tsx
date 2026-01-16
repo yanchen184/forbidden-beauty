@@ -4,6 +4,7 @@ import {
   subscribeToSearchStats,
   subscribeToSponsors,
   subscribeToComments,
+  subscribeToFunnelStats,
   VisitorStats,
   SearchVisitorStats,
   Sponsor,
@@ -61,8 +62,15 @@ const AdminPage = () => {
   const [recentVisitors, setRecentVisitors] = useState<Visitor[]>([])
   const [buttonClicks, setButtonClicks] = useState<ButtonClick[]>([])
   const [buttonStats, setButtonStats] = useState<ButtonStat[]>([])
+  const [funnelStats, setFunnelStats] = useState<Record<string, number>>({
+    page_view: 0,
+    scroll_to_plans: 0,
+    click_plan: 0,
+    open_modal: 0,
+    submit_sponsor: 0
+  })
   const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'overview' | 'visitors' | 'sponsors' | 'comments' | 'buttons'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'visitors' | 'sponsors' | 'comments' | 'buttons' | 'funnel'>('overview')
 
   useEffect(() => {
     // 訂閱訪客統計
@@ -147,6 +155,11 @@ const AdminPage = () => {
     }
     fetchButtonStats()
 
+    // 訂閱漏斗統計
+    const unsubscribeFunnel = subscribeToFunnelStats((stats) => {
+      setFunnelStats(stats)
+    })
+
     return () => {
       unsubscribeVisitor()
       unsubscribeSearch()
@@ -155,6 +168,7 @@ const AdminPage = () => {
       unsubscribeSearchVisitors()
       unsubscribeRecentVisitors()
       unsubscribeClicks()
+      unsubscribeFunnel()
     }
   }, [])
 
@@ -250,7 +264,8 @@ const AdminPage = () => {
               { id: 'visitors', label: '訪客', icon: '👥' },
               { id: 'sponsors', label: '贊助', icon: '💰' },
               { id: 'comments', label: '留言', icon: '💬' },
-              { id: 'buttons', label: '按鈕', icon: '🖱️' }
+              { id: 'buttons', label: '按鈕', icon: '🖱️' },
+              { id: 'funnel', label: '漏斗', icon: '📈' }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -689,6 +704,91 @@ const AdminPage = () => {
                   )}
                 </div>
               </>
+            )}
+
+            {/* ========== 漏斗 Tab ========== */}
+            {activeTab === 'funnel' && (
+              <div className="bg-white rounded-lg p-6 shadow">
+                <h2 className="text-lg font-bold text-gray-800 mb-6">📈 轉換漏斗分析</h2>
+
+                {/* 漏斗視覺化 */}
+                <div className="space-y-4 mb-8">
+                  {[
+                    { key: 'page_view', label: '頁面瀏覽', icon: '👁️' },
+                    { key: 'scroll_to_plans', label: '看到方案區', icon: '📜' },
+                    { key: 'click_plan', label: '點擊方案', icon: '👆' },
+                    { key: 'open_modal', label: '打開感謝視窗', icon: '🎉' },
+                    { key: 'submit_sponsor', label: '完成留名', icon: '✅' }
+                  ].map((step, index, arr) => {
+                    const count = funnelStats[step.key] || 0
+                    const prevCount = index > 0 ? (funnelStats[arr[index - 1].key] || 1) : count
+                    const rate = index === 0 ? 100 : Math.round((count / prevCount) * 100) || 0
+                    const totalRate = funnelStats.page_view ? Math.round((count / funnelStats.page_view) * 100) : 0
+                    const maxWidth = funnelStats.page_view ? (count / funnelStats.page_view) * 100 : 100
+
+                    return (
+                      <div key={step.key} className="relative">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-700">
+                            {step.icon} {step.label}
+                          </span>
+                          <div className="text-sm">
+                            <span className="font-bold text-gray-900">{count.toLocaleString()}</span>
+                            {index > 0 && (
+                              <span className={`ml-2 ${rate >= 50 ? 'text-green-600' : rate >= 20 ? 'text-yellow-600' : 'text-red-600'}`}>
+                                ({rate}% 轉換)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="h-8 bg-gray-100 rounded-lg overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-500 ${
+                              index === 0 ? 'bg-blue-500' :
+                              index === 1 ? 'bg-cyan-500' :
+                              index === 2 ? 'bg-teal-500' :
+                              index === 3 ? 'bg-green-500' :
+                              'bg-emerald-500'
+                            }`}
+                            style={{ width: `${Math.max(maxWidth, 2)}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          佔總訪客 {totalRate}%
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* 轉換率摘要 */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-gray-200">
+                  <div className="bg-blue-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {funnelStats.page_view ? Math.round((funnelStats.scroll_to_plans / funnelStats.page_view) * 100) : 0}%
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">瀏覽→看方案</div>
+                  </div>
+                  <div className="bg-cyan-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-cyan-600">
+                      {funnelStats.scroll_to_plans ? Math.round((funnelStats.click_plan / funnelStats.scroll_to_plans) * 100) : 0}%
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">看方案→點擊</div>
+                  </div>
+                  <div className="bg-teal-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-teal-600">
+                      {funnelStats.click_plan ? Math.round((funnelStats.open_modal / funnelStats.click_plan) * 100) : 0}%
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">點擊→打開視窗</div>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-green-600">
+                      {funnelStats.page_view ? Math.round((funnelStats.submit_sponsor / funnelStats.page_view) * 100) : 0}%
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">總轉換率</div>
+                  </div>
+                </div>
+              </div>
             )}
           </>
         )}

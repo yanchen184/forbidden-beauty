@@ -589,4 +589,211 @@ export const subscribeToSponsors = (
   return unsubscribe
 }
 
+// ============ 捲動深度追蹤 ============
+
+/**
+ * 追蹤的區塊 ID
+ */
+const TRACKED_SECTIONS = [
+  'hero',
+  'project-info',
+  'funding-plans',
+  'sponsors',
+  'faq',
+  'comments',
+  'risk',
+  'refund',
+  'contact',
+  'info'
+]
+
+/**
+ * 已追蹤的區塊（避免重複追蹤）
+ */
+const trackedSections = new Set<string>()
+
+/**
+ * 追蹤捲動深度
+ * 記錄用戶看到了哪些區塊
+ */
+export const trackScrollDepth = async (sectionId: string) => {
+  // 避免重複追蹤
+  if (trackedSections.has(sectionId)) return
+  trackedSections.add(sectionId)
+
+  try {
+    await addDoc(collection(db, 'scrollDepth'), {
+      sectionId,
+      timestamp: serverTimestamp(),
+      sessionId: getSessionId()
+    })
+
+    // 更新區塊統計
+    const sectionStatsRef = doc(db, 'sectionStats', sectionId)
+    const sectionStatsDoc = await getDoc(sectionStatsRef)
+
+    if (sectionStatsDoc.exists()) {
+      await updateDoc(sectionStatsRef, {
+        views: increment(1),
+        lastView: serverTimestamp()
+      })
+    } else {
+      await setDoc(sectionStatsRef, {
+        sectionId,
+        views: 1,
+        lastView: serverTimestamp()
+      })
+    }
+
+    if (analytics) {
+      logEvent(analytics, 'scroll_depth', {
+        section_id: sectionId
+      })
+    }
+  } catch (error) {
+    console.error('追蹤捲動深度失敗:', error)
+  }
+}
+
+/**
+ * 取得已追蹤的區塊列表
+ */
+export const getTrackedSections = () => TRACKED_SECTIONS
+
+// ============ Session 追蹤 ============
+
+/**
+ * 取得或生成 Session ID
+ */
+export const getSessionId = (): string => {
+  const SESSION_KEY = 'forbidden_beauty_session'
+  let sessionId = sessionStorage.getItem(SESSION_KEY)
+
+  if (!sessionId) {
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+    sessionStorage.setItem(SESSION_KEY, sessionId)
+  }
+
+  return sessionId
+}
+
+/**
+ * 檢查是否為回訪訪客
+ */
+export const isReturningVisitor = (): boolean => {
+  const VISITOR_KEY = 'forbidden_beauty_visitor'
+  const hasVisited = localStorage.getItem(VISITOR_KEY)
+
+  if (!hasVisited) {
+    localStorage.setItem(VISITOR_KEY, new Date().toISOString())
+    return false
+  }
+
+  return true
+}
+
+/**
+ * 取得訪客類型
+ */
+export const getVisitorType = (): 'new' | 'returning' => {
+  return isReturningVisitor() ? 'returning' : 'new'
+}
+
+// ============ 轉換漏斗追蹤 ============
+
+/**
+ * 漏斗步驟定義
+ */
+export type FunnelStep =
+  | 'page_view'           // 進入頁面
+  | 'scroll_to_plans'     // 看到方案區
+  | 'click_plan'          // 點擊方案
+  | 'open_modal'          // 打開感謝 Modal
+  | 'submit_sponsor'      // 完成留名
+
+/**
+ * 追蹤漏斗步驟
+ */
+export const trackFunnelStep = async (step: FunnelStep, metadata?: Record<string, unknown>) => {
+  try {
+    const data: Record<string, unknown> = {
+      step,
+      timestamp: serverTimestamp(),
+      sessionId: getSessionId(),
+      visitorType: getVisitorType()
+    }
+
+    if (metadata) {
+      Object.entries(metadata).forEach(([key, value]) => {
+        if (value !== undefined) {
+          data[key] = value
+        }
+      })
+    }
+
+    await addDoc(collection(db, 'funnel'), data)
+
+    // 更新漏斗統計
+    const funnelStatsRef = doc(db, 'stats', 'funnel')
+    const funnelStatsDoc = await getDoc(funnelStatsRef)
+
+    if (funnelStatsDoc.exists()) {
+      await updateDoc(funnelStatsRef, {
+        [step]: increment(1),
+        lastUpdate: serverTimestamp()
+      })
+    } else {
+      await setDoc(funnelStatsRef, {
+        [step]: 1,
+        lastUpdate: serverTimestamp()
+      })
+    }
+
+    if (analytics) {
+      logEvent(analytics, 'funnel_step', {
+        step,
+        ...metadata
+      })
+    }
+
+    console.log(`漏斗步驟: ${step}`)
+  } catch (error) {
+    console.error('追蹤漏斗步驟失敗:', error)
+  }
+}
+
+/**
+ * 訂閱漏斗統計
+ */
+export const subscribeToFunnelStats = (
+  callback: (stats: Record<string, number>) => void
+): (() => void) => {
+  const funnelStatsRef = doc(db, 'stats', 'funnel')
+
+  const unsubscribe = onSnapshot(funnelStatsRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.data()
+      callback({
+        page_view: data.page_view || 0,
+        scroll_to_plans: data.scroll_to_plans || 0,
+        click_plan: data.click_plan || 0,
+        open_modal: data.open_modal || 0,
+        submit_sponsor: data.submit_sponsor || 0
+      })
+    } else {
+      callback({
+        page_view: 0,
+        scroll_to_plans: 0,
+        click_plan: 0,
+        open_modal: 0,
+        submit_sponsor: 0
+      })
+    }
+  }, (error) => {
+    console.error('監聽漏斗統計失敗:', error)
+  })
+
+  return unsubscribe
+}
+
 export { db, analytics }

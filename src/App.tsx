@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { HashRouter, Routes, Route } from 'react-router-dom'
-import { trackVisitor } from './firebase'
+import { trackVisitor, trackFunnelStep } from './firebase'
+import { useScrollTracking } from './hooks/useScrollTracking'
 import Header from './components/Header'
 import Hero from './components/Hero'
 import ProjectInfo from './components/ProjectInfo'
@@ -21,19 +22,28 @@ import Footer from './components/Footer'
 import AdminPage from './pages/AdminPage'
 
 function HomePage() {
+  // 啟用捲動追蹤
+  useScrollTracking()
+
   return (
     <div className="min-h-screen bg-white">
       <Header />
       <main>
-        <Hero />
-        <ProjectInfo />
-        <OilPaintingSection />
-        <MusicSection />
-        <PhilosophySection />
-        <CallToAction />
-        <BudgetChart />
+        <section id="hero">
+          <Hero />
+        </section>
+        <section id="project-info">
+          <ProjectInfo />
+          <OilPaintingSection />
+          <MusicSection />
+          <PhilosophySection />
+          <CallToAction />
+          <BudgetChart />
+        </section>
         <FundingPlans />
-        <SponsorList />
+        <section id="sponsors">
+          <SponsorList />
+        </section>
         <FAQSection />
         <CommentSection />
         <RiskSection />
@@ -50,6 +60,8 @@ function App() {
   useEffect(() => {
     // 記錄訪客
     trackVisitor()
+    // 追蹤漏斗：頁面瀏覽
+    trackFunnelStep('page_view')
   }, [])
 
   return (

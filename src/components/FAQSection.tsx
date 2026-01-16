@@ -1,9 +1,75 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 interface FAQItem {
   id: number
   question: string
   answer: string
+}
+
+/**
+ * 單一 FAQ 項目組件，支援平滑動畫
+ */
+const FAQItemComponent = ({
+  faq,
+  isOpen,
+  onToggle
+}: {
+  faq: FAQItem
+  isOpen: boolean
+  onToggle: () => void
+}) => {
+  const contentRef = useRef<HTMLDivElement>(null)
+  const [height, setHeight] = useState(0)
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setHeight(contentRef.current.scrollHeight)
+    }
+  }, [faq.answer])
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <button
+        onClick={onToggle}
+        className="w-full px-6 py-4 text-left flex items-center justify-between
+                   hover:bg-gray-50 transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
+        aria-expanded={isOpen}
+        aria-controls={`faq-answer-${faq.id}`}
+      >
+        <span className="font-medium text-gray-800">
+          Q{faq.id}. {faq.question}
+        </span>
+        <svg
+          className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </button>
+      <div
+        id={`faq-answer-${faq.id}`}
+        className="overflow-hidden transition-all duration-300 ease-in-out"
+        style={{ maxHeight: isOpen ? `${height}px` : '0px' }}
+      >
+        <div
+          ref={contentRef}
+          className="px-6 pb-4 text-gray-600 leading-relaxed border-t border-gray-100 pt-4"
+        >
+          {faq.answer}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 /**
@@ -79,39 +145,12 @@ const FAQSection = () => {
 
         <div className="space-y-3">
           {faqs.map((faq) => (
-            <div
+            <FAQItemComponent
               key={faq.id}
-              className="bg-white rounded-lg border border-gray-200 overflow-hidden"
-            >
-              <button
-                onClick={() => toggleFAQ(faq.id)}
-                className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
-              >
-                <span className="font-medium text-gray-800">
-                  Q{faq.id}. {faq.question}
-                </span>
-                <svg
-                  className={`w-5 h-5 text-gray-500 transition-transform ${
-                    openId === faq.id ? 'rotate-180' : ''
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-              {openId === faq.id && (
-                <div className="px-6 pb-4 text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
-                  {faq.answer}
-                </div>
-              )}
-            </div>
+              faq={faq}
+              isOpen={openId === faq.id}
+              onToggle={() => toggleFAQ(faq.id)}
+            />
           ))}
         </div>
       </div>
