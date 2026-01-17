@@ -1,0 +1,9 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://yanchen184.github.io/forbidden-beauty/sitemap.xml
+
+# Host
+Host: https://yanchen184.github.io

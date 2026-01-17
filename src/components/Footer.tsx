@@ -16,9 +16,10 @@ const Footer = () => {
           {/* 左側 - 專案資訊 */}
           <div>
             <h3 className="text-xl font-bold mb-4" style={{ fontFamily: 'Noto Serif TC, serif' }}>
-              禁忌之美
+              禁忌之美 - 鍾佳播募資
             </h3>
             <p className="text-gray-400 text-sm leading-relaxed">
+              鍾佳播導演最新力作<br />
               一場挑戰美感與慾望界線的史詩級實驗影像<br />
               華麗成人藝術電影募資計畫
             </p>
@@ -90,7 +91,7 @@ const Footer = () => {
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
           <p>© 2025 禁忌之美製作團隊 All Rights Reserved.</p>
           <p className="mt-2">
-            本網站為募資計畫展示頁面，實際募資請以官方平台為準
+            鍾佳播募資計畫 - 本網站為募資計畫展示頁面
           </p>
         </div>
       </div>
