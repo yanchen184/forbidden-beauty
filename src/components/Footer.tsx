@@ -20,8 +20,8 @@ const Footer = () => {
             </h3>
             <p className="text-gray-400 text-sm leading-relaxed">
               鍾佳播導演最新力作<br />
-              一場挑戰美感與慾望界線的史詩級實驗影像<br />
-              華麗成人藝術電影募資計畫
+              一場挑戰美感界線的史詩級實驗影像<br />
+              藝術電影募資計畫
             </p>
           </div>
 

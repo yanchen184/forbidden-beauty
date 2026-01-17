@@ -5,8 +5,8 @@ import { trackButtonClick, trackShareClick, subscribeToSponsors, Sponsor } from 
  * 分享網址
  */
 const SHARE_URL = 'https://yanchen184.github.io/forbidden-beauty/'
-const SHARE_TITLE = '禁忌之美：華麗成人藝術電影 - 募資專案'
-const SHARE_TEXT = '一場挑戰美感與慾望界線的史詩級實驗影像，支持這場藝術革命！'
+const SHARE_TITLE = '禁忌之美：藝術電影 - 鍾佳播募資專案'
+const SHARE_TEXT = '一場挑戰美感界線的史詩級實驗影像，支持鍾佳播導演的藝術革命！'
 
 const Hero = () => {
   const [sponsorCount, setSponsorCount] = useState(0)
@@ -83,10 +83,10 @@ const Hero = () => {
                     禁忌之美
                   </h1>
                   <p className="text-xl md:text-2xl text-gray-300 mb-6">
-                    華麗成人藝術電影
+                    藝術電影募資計畫
                   </p>
                   <p className="text-gray-300 max-w-md mx-auto">
-                    一場挑戰美感與慾望界線的<br />
+                    一場挑戰美感界線的<br />
                     史詩級實驗影像
                   </p>
                 </div>
@@ -160,13 +160,13 @@ const Hero = () => {
 
               {/* 說明文字 */}
               <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                我們正在籌備一部史無前例的成人藝術電影，
+                鍾佳播導演正在籌備一部史無前例的藝術電影，
                 這不是單純的影像製作，也不是煽情的消費娛樂。而是
                 一場開創的文化實驗與藝術實踐。它將挑戰傳統視覺
-                品的邊界，正面直視人類最真實、最敏感且直接的慾
-                望與以感受的本質式呈現，這不僅僅是一
-                部電影，而是一場結合視覺、音樂、場景、身體與聲
-                體的綜合藝術表演。
+                品的邊界，正面直視人類最真實、最敏感的情感
+                並以感受的本質方式呈現，這不僅僅是一
+                部電影，而是一場結合視覺、音樂、場景與聲
+                音的綜合藝術表演。
               </p>
 
               {/* 專案時間 */}
