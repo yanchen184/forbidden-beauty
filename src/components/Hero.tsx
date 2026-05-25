@@ -4,7 +4,7 @@ import { trackButtonClick, trackShareClick, subscribeToSponsors, Sponsor } from 
 /**
  * 分享網址
  */
-const SHARE_URL = 'https://yanchen184.github.io/forbidden-beauty/'
+const SHARE_URL = 'https://fb.yanchen.app/'
 const SHARE_TITLE = '禁忌之美：華麗成人藝術電影 - 募資專案'
 const SHARE_TEXT = '一場挑戰美感與慾望界線的史詩級實驗影像，支持這場藝術革命！'
 
